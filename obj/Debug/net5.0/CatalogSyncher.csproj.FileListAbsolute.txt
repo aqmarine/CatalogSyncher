@@ -1,0 +1,16 @@
+E:\Projects\CatalogSyncher\bin\Debug\net5.0\CatalogSyncher.exe
+E:\Projects\CatalogSyncher\bin\Debug\net5.0\CatalogSyncher.deps.json
+E:\Projects\CatalogSyncher\bin\Debug\net5.0\CatalogSyncher.runtimeconfig.json
+E:\Projects\CatalogSyncher\bin\Debug\net5.0\CatalogSyncher.runtimeconfig.dev.json
+E:\Projects\CatalogSyncher\bin\Debug\net5.0\CatalogSyncher.dll
+E:\Projects\CatalogSyncher\bin\Debug\net5.0\ref\CatalogSyncher.dll
+E:\Projects\CatalogSyncher\bin\Debug\net5.0\CatalogSyncher.pdb
+E:\Projects\CatalogSyncher\obj\Debug\net5.0\CatalogSyncher.csprojAssemblyReference.cache
+E:\Projects\CatalogSyncher\obj\Debug\net5.0\CatalogSyncher.GeneratedMSBuildEditorConfig.editorconfig
+E:\Projects\CatalogSyncher\obj\Debug\net5.0\CatalogSyncher.AssemblyInfoInputs.cache
+E:\Projects\CatalogSyncher\obj\Debug\net5.0\CatalogSyncher.AssemblyInfo.cs
+E:\Projects\CatalogSyncher\obj\Debug\net5.0\CatalogSyncher.csproj.CoreCompileInputs.cache
+E:\Projects\CatalogSyncher\obj\Debug\net5.0\CatalogSyncher.dll
+E:\Projects\CatalogSyncher\obj\Debug\net5.0\ref\CatalogSyncher.dll
+E:\Projects\CatalogSyncher\obj\Debug\net5.0\CatalogSyncher.pdb
+E:\Projects\CatalogSyncher\obj\Debug\net5.0\CatalogSyncher.genruntimeconfig.cache
