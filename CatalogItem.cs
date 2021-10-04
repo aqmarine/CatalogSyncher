@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Security.Cryptography;
 
@@ -12,12 +13,18 @@ namespace CatalogSyncher
 
         public CatalogItemAction CatalogItemAction { get; set; }
 
+        public string RelativePath { get; set; }
+
         public CatalogItem(string path)
         {
             Path = path;
             CatalogItemAction = 0;
         }
 
+        public void CreateRelativePath(string source, string filePath)
+        {
+            RelativePath = System.IO.Path.GetRelativePath(source, filePath);
+        }
 
     }
 
@@ -51,7 +58,8 @@ namespace CatalogSyncher
 
     public class MyFile: CatalogItem
     {
-        public string RelativePath { get; set; }
+        private static readonly Lazy<MD5> _hash = new Lazy<MD5>(MD5.Create);
+        
         public FileInfo Info { get; private set; }
         public MyFile(string path): base(path) { }
 
@@ -62,13 +70,11 @@ namespace CatalogSyncher
 
         public byte[] GetHashMD5()
         {
-            return MD5.Create().ComputeHash(Info.OpenRead());
+            using var fileData = Info.OpenRead();
+            return _hash.Value.ComputeHash(fileData);
         }
 
-        public void CreateRelativePath(string source, string filePath)
-        {
-            RelativePath = System.IO.Path.GetRelativePath(source, filePath);
-        }
+       
     }
 
     public enum CatalogItemAction
@@ -78,5 +84,26 @@ namespace CatalogSyncher
         Delete = 2,
         Add = 3,
         Replace = 5
+    }
+
+    public class RelativePathEqualityComparer : IEqualityComparer<MyDirectory>
+    {
+        public bool Equals(MyDirectory x, MyDirectory y)
+        {
+            if(ReferenceEquals(x, y))
+            {
+                return true;
+            }
+            if(x == null || y == null)
+            {
+                return false;
+            }
+            return x.RelativePath == y.RelativePath;
+        }
+
+        public int GetHashCode([DisallowNull] MyDirectory obj)
+        {
+            return obj?.RelativePath?.GetHashCode() ?? 0;
+        }
     }
 }
