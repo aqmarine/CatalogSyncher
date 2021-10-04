@@ -119,11 +119,6 @@ namespace CatalogSyncher
             MarkAsAddable(dicSource.Values);
         }
 
-        private static void GoToDirectory()
-        {
-
-        }
-
         private static void MarkAsRemovable(IEnumerable<MyFile> collection)
         {
             foreach (var item in collection)
@@ -139,6 +134,78 @@ namespace CatalogSyncher
             {
                 item.WasChecked = true;
                 item.CatalogItemAction = CatalogItemAction.Add;
+            }
+        }
+
+
+        public void CompareTwoDirectories(MyDirectory source, MyDirectory replic)
+        {
+            if(source.RelativePath == replic.RelativePath)
+            {
+                var subSourceDirs = source.Subdirectories;
+                var subReplicDirs = replic.Subdirectories;
+                GoDeep(subSourceDirs, subReplicDirs);
+            }
+            FindRemovableDirectories(replic);
+        }
+
+        private void FindRemovableDirectories(MyDirectory replic)
+        {
+            var subDirs = replic.Subdirectories;
+            if (subDirs != null)
+            {
+                foreach (var item in subDirs)
+                {
+                    if(item.WasChecked == false)
+                    {
+                        item.CatalogItemAction = CatalogItemAction.Delete;
+                    }
+                    FindRemovableDirectories(item);
+                }
+            }
+        }
+
+        private void GoDeep(ICollection<MyDirectory> source, ICollection<MyDirectory> replic)
+        {
+            if(source != null)
+            {
+                HashSet<MyDirectory> hsReplic = null;
+                if(replic != null)
+                {
+                    hsReplic = new(new RelativePathEqualityComparer());
+                    foreach (var item in replic)
+                    {
+                        hsReplic.Add(item);
+                    }
+                }
+                foreach (var item in source)
+                {
+                    if(hsReplic.TryGetValue(item, out MyDirectory currentDir))
+                    {
+                        currentDir.WasChecked = true;
+                        GoDeep(item.Subdirectories, currentDir.Subdirectories);
+                    }
+                    else
+                    {
+                        item.CatalogItemAction = CatalogItemAction.Add;
+                        MarkAllSubdirectoriesAsAddable(item);
+                    }
+                    item.WasChecked = true;
+                }
+            }
+            
+        }
+
+        private void MarkAllSubdirectoriesAsAddable(MyDirectory root)
+        {
+            var subDirs = root.Subdirectories;
+            if(subDirs != null)
+            {
+                foreach (var item in subDirs)
+                {
+                    item.CatalogItemAction = CatalogItemAction.Add;
+                    MarkAllSubdirectoriesAsAddable(item);
+                }
             }
         }
     }
