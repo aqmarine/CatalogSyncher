@@ -2,11 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using NLog;
 
 namespace CatalogSyncher
 {
     public class CatalogManager
     {
+        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+
         //?
         //path - подразумевается root
         //relative path уже есть в файле
@@ -25,11 +28,12 @@ namespace CatalogSyncher
                     var sourceFileName = item.Info.FullName;
                     var destFileName = Path.Combine(rootPath, item.RelativePath);
                     actionFunc(sourceFileName, destFileName);
+                    _logger.Info("С файлом {file} была проведена операция {operation}", item.Info.Name, action);
                 }
             }
             catch(Exception e)
             {
-                System.Console.WriteLine("couldn't add files");
+                _logger.Error(e, "couldn't add files");
             }
         }
 
@@ -50,7 +54,7 @@ namespace CatalogSyncher
             }
             catch(Exception e)
             {
-                System.Console.WriteLine(e.Message);
+                _logger.Error(e, "todo");
             }
         }
 
@@ -80,7 +84,7 @@ namespace CatalogSyncher
             }
             catch (Exception e)
             {
-                Console.WriteLine("The process failed: {0}", e.Message);
+                _logger.Error(e, "The process failed: {0}", e.Message);
             }
         }
 
@@ -106,7 +110,7 @@ namespace CatalogSyncher
             }
             catch (Exception e)
             {
-                Console.WriteLine("The process failed: {0}", e.Message);
+                _logger.Error(e, "The process failed: {0}", e.Message);
             }
         }
 
@@ -132,7 +136,7 @@ namespace CatalogSyncher
             }
             catch (Exception e)
             {
-                Console.WriteLine("The process failed: {0}", e.Message);
+                _logger.Error(e, "The process failed: {0}", e.Message);
             }
         } 
 

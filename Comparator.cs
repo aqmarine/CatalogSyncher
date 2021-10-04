@@ -1,13 +1,15 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using NLog;
 
 namespace CatalogSyncher
 {
     //internal or public?
     public class Comparator
     {
-
+        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+        
         public void CompareTwoFilesDictionaries(IDictionary<byte[], MyFile> source, IDictionary<byte[], MyFile> replic)
         {
             //CleanDictionaries(source, replic);

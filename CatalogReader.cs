@@ -1,16 +1,18 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using NLog;
 
 namespace CatalogSyncher
 {
     public class CatalogReader
     {
+        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
         public static MyDirectory WalkDirectoryTree(System.IO.DirectoryInfo root)
         {
             System.IO.FileInfo[] files;
             System.IO.DirectoryInfo[] subDirs;
-            //Console.WriteLine(root.FullName);
+            //_logger.Info(root.FullName);
             var catalog = new MyDirectory(root);
             files = root.GetFiles("*.*");
             //var tempCatalog = catalog;
@@ -22,7 +24,7 @@ namespace CatalogSyncher
                     // want to open, delete or modify the file, then
                     // a try-catch block is required here to handle the case
                     // where the file has been deleted since the call to TraverseTree().
-                    //Console.WriteLine(fi.FullName);
+                    //_logger.Info(fi.FullName);
                     catalog.AddFile(new MyFile(fi));
                 }
 
@@ -44,7 +46,7 @@ namespace CatalogSyncher
         {
             System.IO.FileInfo[] files;
             System.IO.DirectoryInfo[] subDirs;
-            //Console.WriteLine(root.FullName);
+            //_logger.Info(root.FullName);
             var catalog = root;
             files = catalog.Info.GetFiles("*.*");
             //var tempCatalog = catalog;
