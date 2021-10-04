@@ -16,7 +16,7 @@ namespace CatalogSyncher
             //var tempCatalog = catalog;
             if (files != null)
             {
-                foreach (System.IO.FileInfo fi in files)
+                foreach (var fi in files)
                 {
                     // In this example, we only access the existing FileInfo object. If we
                     // want to open, delete or modify the file, then
@@ -30,7 +30,7 @@ namespace CatalogSyncher
                 subDirs = root.GetDirectories();
                
 
-                foreach (System.IO.DirectoryInfo dirInfo in subDirs)
+                foreach (var dirInfo in subDirs)
                 {
                     // Resursive call for each subdirectory.
                     catalog.AddDirectory(new MyDirectory(dirInfo));
@@ -50,7 +50,7 @@ namespace CatalogSyncher
             //var tempCatalog = catalog;
             if (files != null)
             {
-                foreach (System.IO.FileInfo fi in files)
+                foreach (var fi in files)
                 {
                     catalog.AddFile(new MyFile(fi));
                 }
@@ -59,7 +59,7 @@ namespace CatalogSyncher
                 subDirs = catalog.Info.GetDirectories();
                
 
-                foreach (System.IO.DirectoryInfo dirInfo in subDirs)
+                foreach (var dirInfo in subDirs)
                 {
                     // Resursive call for each subdirectory.
                     var folder = new MyDirectory(dirInfo);
@@ -83,5 +83,23 @@ namespace CatalogSyncher
             return filesDic;                    
         }
     
+        public static MyDirectory GetDirectories(string path)
+        {
+            var root = new MyDirectory(new DirectoryInfo(path));
+            WalkDirectory3(root, path);
+            return root;
+        }
+
+        private static void WalkDirectory3(MyDirectory directory, string initialPath)
+        {
+            var subDirs = directory.Info.GetDirectories();
+            foreach (var dirInfo in subDirs)
+            {
+                var folder = new MyDirectory(dirInfo);
+                folder.CreateRelativePath(initialPath, folder.Info.FullName);
+                directory.AddDirectory(folder);
+                WalkDirectory3(folder, initialPath);
+            }
+        }
     }
 }
