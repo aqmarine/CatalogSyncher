@@ -10,8 +10,12 @@ namespace CatalogSyncher
     {
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
 
-        static void Main(string[] args)
+        static int Main(string[] args)
         {
+            if(args.Length != 4)
+            {
+                return 1;
+            }
             string sourcePath = args[0]; //todo named params
             string replicPath = args[1];
             TimeSpan.TryParse(args[2], out var interval); 
@@ -27,7 +31,9 @@ namespace CatalogSyncher
                 ValidateParams(sourcePath, replicPath, interval);
                 using (var syncher = new PeriodicSyncher(interval, new SyncManager(sourcePath, replicPath)))
                 {
-                    Console.ReadLine();
+                    System.Console.WriteLine("Press Escape for exit...");
+                    WaitForEscape();
+                    
                 }
             }
             catch (Exception e)
@@ -37,6 +43,15 @@ namespace CatalogSyncher
             finally
             {
                 LogManager.Shutdown();
+            }
+            return 0;
+        }
+
+        private static void WaitForEscape()
+        {
+            while (!(Console.KeyAvailable && Console.ReadKey(true).Key == ConsoleKey.Escape))
+            {
+                System.Threading.Thread.Sleep(250);
             }
         }
 
