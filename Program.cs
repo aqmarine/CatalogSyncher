@@ -33,7 +33,11 @@ namespace CatalogSyncher
                 {
                     System.Console.WriteLine("Press Escape for exit...");
                     WaitForEscape();
-                    
+                    System.Console.WriteLine("Start finish...");
+                    if(syncher.SynchronizationRunning)
+                    {
+                        FinishProgram(syncher);
+                    }
                 }
             }
             catch (Exception e)
@@ -42,9 +46,37 @@ namespace CatalogSyncher
             }
             finally
             {
+                _logger.Trace("Shutdown logger");
                 LogManager.Shutdown();
             }
             return 0;
+        }
+
+        private static void FinishProgram(PeriodicSyncher syncher)
+        {
+            System.Console.WriteLine("Warning: Now synchronization operation is running.");
+            System.Console.WriteLine("If you want to interrupt synchonization process, press [Y]." +
+            "\nIf you want to wait a completion of the operation, press [N].");
+            ConsoleKeyInfo cki;
+            do 
+            {
+                while (Console.KeyAvailable == false)
+                {
+                    System.Threading.Thread.Sleep(250);
+                }
+                cki = Console.ReadKey(true);
+                Console.WriteLine("Вы ввели клавишу {0}", cki.Key);
+            } while (cki.Key != ConsoleKey.Y && cki.Key != ConsoleKey.N);
+
+            if (cki.Key == ConsoleKey.N)
+            {
+                Console.WriteLine("Awaiting running process to finish");
+                while (syncher.SynchronizationRunning)
+                {
+                    System.Threading.Thread.Sleep(100);
+                }
+                Console.WriteLine("Synchronization was completed. The program are closing...");
+            }
         }
 
         private static void WaitForEscape()

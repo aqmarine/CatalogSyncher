@@ -9,7 +9,10 @@ namespace CatalogSyncher
         private readonly Object _lockObj = new Object();
         private readonly Timer _timer;
         private readonly SyncManager _syncher;
+        private bool _synchronizationStarted;
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+
+        public bool SynchronizationRunning { get => _synchronizationStarted; }
 
         public PeriodicSyncher(TimeSpan interval, SyncManager syncher)
         {
@@ -21,12 +24,16 @@ namespace CatalogSyncher
         {
             if (Monitor.TryEnter(_lockObj)) 
             {
+                _synchronizationStarted = true;
+                _logger.Info("Start sync");
                 try 
                 {
-                    _syncher.Sync();
+                   _syncher.Sync();
                 }
                 finally 
                 {
+                    _synchronizationStarted = false;
+                    _logger.Info("Sync completed.");
                     Monitor.Exit(_lockObj);
                 }
             }
@@ -38,7 +45,7 @@ namespace CatalogSyncher
 
         public void Dispose()
         {
-            ((IDisposable)_timer).Dispose();
+            _timer.Dispose();
         }
     }
 }
