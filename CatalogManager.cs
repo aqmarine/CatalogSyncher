@@ -10,18 +10,19 @@ namespace CatalogSyncher
     {
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
 
-        public static void CreateFiles(IEnumerable<MyFile> files, string rootPath)
+        public static bool CreateFiles(IEnumerable<MyFile> files, string rootPath)
         {
-            ProcessFile(files, rootPath, CatalogItemAction.Create, File.Copy);
+            return ProcessFile(files, rootPath, CatalogItemAction.Create, File.Copy);
         }
 
-        public static void MoveFiles(IEnumerable<MyFile> files, string rootPath)
+        public static bool MoveFiles(IEnumerable<MyFile> files, string rootPath)
         {
-            ProcessFile(files, rootPath, CatalogItemAction.Rename, File.Move);
+            return ProcessFile(files, rootPath, CatalogItemAction.Rename, File.Move);
         }
 
-        public static void DeleteFiles(IEnumerable<MyFile> files)
+        public static bool DeleteFiles(IEnumerable<MyFile> files)
         {
+            var atLeastOneFileWasDeleted = false;
             var removableFiles = files.Where(i => i.CatalogItemAction == CatalogItemAction.Delete);
             foreach (var item in removableFiles)
             {
@@ -29,13 +30,14 @@ namespace CatalogSyncher
                 {
                     item.Info.Delete();
                     _logger.Info("The file {file} was deleted ", item.RelativePath);
+                    atLeastOneFileWasDeleted |= true;
                 }
                 catch(Exception e)
                 {
                     _logger.Error(e, "Couldn't delete file {name}", item.RelativePath);
                 }
             }
-            
+            return atLeastOneFileWasDeleted;
         }
 
         public static bool CreateDirectories(MyDirectory sourceDir, string rootPath)
@@ -96,8 +98,9 @@ namespace CatalogSyncher
             return atLeastOneWasProcessed;
         }
 
-        private static void ProcessFile(IEnumerable<MyFile> files, string rootPath, CatalogItemAction action, Action<string, string> actionFunc)
+        private static bool ProcessFile(IEnumerable<MyFile> files, string rootPath, CatalogItemAction action, Action<string, string> actionFunc)
         {
+            var atLeastOneFileWasProcessed = false;
             var processableFiles = files.Where(i => i.CatalogItemAction == action);
             
             foreach (var item in processableFiles)
@@ -107,13 +110,23 @@ namespace CatalogSyncher
                     var sourceFileName = item.Info.FullName;
                     var destFileName = Path.Combine(rootPath, item.RelativePath);
                     actionFunc(sourceFileName, destFileName);
-                    _logger.Info("The file {file} was {operation}ed ", item.RelativePath, action);
+                    _logger.Info("The file {file} was {operation} ", item.RelativePath, GetOperationString(action));
+                    atLeastOneFileWasProcessed |= true;
                 }
                 catch(Exception e)
                 {
                     _logger.Error(e, "Couldn't {action} the file {name}", action, item.RelativePath);
                 }
             }
+            return atLeastOneFileWasProcessed;
+
+            static string GetOperationString(CatalogItemAction action) => action switch
+            {
+                CatalogItemAction.Rename => "renamed",
+                CatalogItemAction.Delete => "deleted",
+                CatalogItemAction.Create => "created",
+                _ => "",
+            };
         }
     }
 }

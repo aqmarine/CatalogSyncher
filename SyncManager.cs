@@ -9,6 +9,7 @@ namespace CatalogSyncher
     {
         private readonly string _sourcePath;
         private readonly string _replicPath;
+        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
 
         public SyncManager(string sourcePath, string replicPath)
         {
@@ -26,12 +27,16 @@ namespace CatalogSyncher
             //todo везде юзать static или экземплярные
             Comparator.CompareTwoDirectories(sourceDirs, replicDirs);
             Comparator.CompareTwoFileDictionaries(dicA, dicB);
-
-            CatalogManager.CreateDirectories(sourceDirs, _replicPath);
-            CatalogManager.MoveFiles(dicB.Select(i => i.Value), _replicPath);
-            CatalogManager.CreateFiles(dicA.Select(i => i.Value), _replicPath);
-            CatalogManager.DeleteFiles(dicB.Select(i => i.Value));
-            CatalogManager.DeleteDirectories(replicDirs);
+            var atLeastOneItemWasChanged = false;
+            atLeastOneItemWasChanged |= CatalogManager.CreateDirectories(sourceDirs, _replicPath);//
+            atLeastOneItemWasChanged |= CatalogManager.MoveFiles(dicB.Select(i => i.Value), _replicPath);
+            atLeastOneItemWasChanged |= CatalogManager.CreateFiles(dicA.Select(i => i.Value), _replicPath);
+            atLeastOneItemWasChanged |= CatalogManager.DeleteFiles(dicB.Select(i => i.Value));
+            atLeastOneItemWasChanged |= CatalogManager.DeleteDirectories(replicDirs);
+            if(!atLeastOneItemWasChanged)
+            {
+                _logger.Info("Catalogs are identical");
+            }
         }
     }
 }
