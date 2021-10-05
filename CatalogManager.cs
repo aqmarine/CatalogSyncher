@@ -10,7 +10,6 @@ namespace CatalogSyncher
     {
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
 
-
         public static void CreateFiles(IEnumerable<MyFile> files, string rootPath)
         {
             ProcessFile(files, rootPath, CatalogItemAction.Create, File.Copy);
@@ -39,14 +38,16 @@ namespace CatalogSyncher
             
         }
 
-        public static void CreateDirectories(MyDirectory sourceDir, string rootPath)
+        public static bool CreateDirectories(MyDirectory sourceDir, string rootPath)
         {
+            var atLeastOneWasCreated = false;
             if(sourceDir.CatalogItemAction == CatalogItemAction.Create)
             {
                 var path = Path.Combine(rootPath, sourceDir.RelativePath);
                 try
                 {
                     Directory.CreateDirectory(path);
+                    atLeastOneWasCreated = true;
                     _logger.Info("The directory {name} was created", path);
                 }
                 catch (Exception e)
@@ -54,16 +55,19 @@ namespace CatalogSyncher
                     _logger.Error(e, "The process of creating directory {name} was failed: {message}", sourceDir.RelativePath, e.Message);
                 }
             }
-            PropagateActionToSubdirectories(sourceDir, subDir => CreateDirectories(subDir, rootPath));
+            atLeastOneWasCreated |= PropagateActionToSubdirectories(sourceDir, subDir => CreateDirectories(subDir, rootPath));
+            return atLeastOneWasCreated;
         }    
 
-        public static void DeleteDirectories(MyDirectory sourceDir)
+        public static bool DeleteDirectories(MyDirectory sourceDir)
         {
+            var atLeastOneWasDeleted = false;
             if(sourceDir.CatalogItemAction == CatalogItemAction.Delete)
             {
                 try
                 {
                     sourceDir.Info.Delete(true);
+                    atLeastOneWasDeleted = true;
                     _logger.Info("The directory {name} was deleted", sourceDir.RelativePath);
                 }
                 catch (Exception e)
@@ -73,51 +77,24 @@ namespace CatalogSyncher
             }
             else
             {
-                PropagateActionToSubdirectories(sourceDir, DeleteDirectories);
+                atLeastOneWasDeleted |= PropagateActionToSubdirectories(sourceDir, DeleteDirectories);
             }
+            return atLeastOneWasDeleted;
         }
 
-        private static void PropagateActionToSubdirectories(MyDirectory directory, Action<MyDirectory> actionForSubDir)
+        private static bool PropagateActionToSubdirectories(MyDirectory directory, Func<MyDirectory, bool> actionForSubDir)
         {
+            var atLeastOneWasProcessed = false;
             var subDirs = directory.Subdirectories;
             if (subDirs != null)
             {
                 foreach (var subDir in subDirs)
                 {
-                    actionForSubDir(subDir);
+                    atLeastOneWasProcessed |= actionForSubDir(subDir);
                 }
             }
+            return atLeastOneWasProcessed;
         }
-
-        // internal static void ManageDirectories(MyDirectory dir)
-        // {
-        //     ICollection<MyDirectory> dirs = null;
-        //     FindAddableOrRemovableDirectories(dir, ref dirs);
-        //     ProcessFolders(dirs);
-        // }
-
-        // private static void ProcessFolders(ICollection<MyDirectory> dirs)
-        // {
-        //     try
-        //     {
-        //         foreach (var item in dirs)
-        //         {
-        //             switch(item.CatalogItemAction)
-        //             {
-        //                 case CatalogItemAction.Add:
-        //                     Directory.CreateDirectory(item.Info.FullName);
-        //                     break;
-        //                 case CatalogItemAction.Delete:
-        //                     Directory.Delete(item.Info.FullName);
-        //                     break;
-        //             }
-        //         }
-        //     }
-        //     catch (Exception e)
-        //     {
-        //         _logger.Error(e, "The process failed: {0}", e.Message);
-        //     }
-        // }
 
         private static void ProcessFile(IEnumerable<MyFile> files, string rootPath, CatalogItemAction action, Action<string, string> actionFunc)
         {
@@ -138,24 +115,5 @@ namespace CatalogSyncher
                 }
             }
         }
-
-
-
-        // private static void FindAddableOrRemovableDirectories(MyDirectory dir, ref ICollection<MyDirectory> foundDirs)
-        // {
-        //     var subDirs = dir.Subdirectories;
-        //     if(subDirs != null)
-        //     {
-        //         if(dir.CatalogItemAction == CatalogItemAction.Create
-        //                     || dir.CatalogItemAction == CatalogItemAction.Delete)
-        //         {
-        //             foundDirs.Add(dir);
-        //         }
-        //         foreach (var item in subDirs)
-        //         {
-        //             FindAddableOrRemovableDirectories(item, ref foundDirs);
-        //         }
-        //     }
-        // }
     }
 }
