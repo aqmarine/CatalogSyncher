@@ -28,31 +28,33 @@ namespace CatalogSyncher
 
     }
 
-    public class MyDirectory: CatalogItem
+    public class MyDirectory : CatalogItem
     {
-        public ICollection<MyDirectory> Subdirectories { get; private set; }
-        public ICollection<MyFile> Files { get; private set; }
-        public DirectoryInfo Info { get; private set; }
-        public MyDirectory(string path): base(path) { }
+        private List<MyDirectory> _subdirectories;
+        private List<MyFile> _files;
 
-        public MyDirectory(DirectoryInfo di): this (di.FullName)
+        public IReadOnlyCollection<MyDirectory> Subdirectories => _subdirectories;
+        public IReadOnlyCollection<MyFile> Files => _files;
+        public DirectoryInfo Info { get; private set; }
+        public MyDirectory(string path) : base(path) { }
+
+        public MyDirectory(DirectoryInfo di) : this(di.FullName)
         {
             Info = di;
         }
 
-        public void AddDirectory(MyDirectory item)
+        public void CreateDirectory(MyDirectory item)
         {
-            //лучшее тут или в ctor?
-            if(Subdirectories == null)
-                Subdirectories = new List<MyDirectory>();
-            Subdirectories.Add(item);
+            if (_subdirectories == null)
+                _subdirectories = new List<MyDirectory>();
+            _subdirectories.Add(item);
         }
 
-        public void AddFile(MyFile item)
+        public void CreateFile(MyFile item)
         {
-            if(Files == null)
-                Files = new List<MyFile>();
-            Files.Add(item);
+            if (_files == null)
+                _files = new List<MyFile>();
+            _files.Add(item);
         }
     }
 
@@ -73,8 +75,6 @@ namespace CatalogSyncher
             using var fileData = Info.OpenRead();
             return _hash.Value.ComputeHash(fileData);
         }
-
-       
     }
 
     public enum CatalogItemAction
@@ -82,8 +82,7 @@ namespace CatalogSyncher
         None = 0,
         Rename = 1,
         Delete = 2,
-        Add = 3,
-        Replace = 5
+        Create = 3
     }
 
     public class RelativePathEqualityComparer : IEqualityComparer<MyDirectory>
