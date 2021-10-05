@@ -12,33 +12,68 @@ namespace CatalogSyncher
 
         static void Main(string[] args)
         {
-            string sourcePath = args[0];
+            string sourcePath = args[0]; //todo named params
             string replicPath = args[1];
-            TimeSpan interval = TimeSpan.Parse(args[2]); 
+            TimeSpan.TryParse(args[2], out var interval); 
             string logPath = args[3];
+            if(logPath == null)
+            {
+                logPath = "Log.log";
+            }
             InitLogger(logPath);
-            _logger.Trace("Interval: {interval}",interval);
-            _logger.Trace("Source path: {source}",sourcePath);
-            _logger.Trace("Replic path: {replic}",replicPath);
-            _logger.Trace("Log path: {log}",logPath);
-            //todo
-            if(!Directory.Exists(sourcePath) || !Directory.Exists(replicPath))
+            try
             {
-                _logger.Error("The path is not correct");
+                LogArguments(sourcePath, replicPath, interval, logPath);
+                ValidateParams(sourcePath, replicPath, interval);
+                using (var syncher = new PeriodicSyncher(interval, new SyncManager(sourcePath, replicPath)))
+                {
+                    Console.ReadLine();
+                }
             }
-            using (var syncher = new PeriodicSyncher(interval, new SyncManager(sourcePath, replicPath)))
+            catch (Exception e)
             {
-                Console.ReadLine();
+                _logger.Error(e);
             }
-            LogManager.Shutdown();
+            finally
+            {
+                LogManager.Shutdown();
+            }
+        }
+
+        private static void LogArguments(string sourcePath, string replicPath, TimeSpan interval, string logPath)
+        {
+            _logger.Trace("Interval: {interval}", interval);
+            _logger.Trace("Source path: {source}", sourcePath);
+            _logger.Trace("Replic path: {replic}", replicPath);
+            _logger.Trace("Log path: {log}", logPath);
+        }
+
+        private static void ValidateParams(string sourcePath, string replicPath, TimeSpan interval)
+        {
+            if (sourcePath == null || !Directory.Exists(sourcePath))
+            {
+                throw new ArgumentException($"The path \"{sourcePath}\" doesn't exist");
+            }
+            if (replicPath == null)
+            {
+                throw new ArgumentException("Replic path wasn't specifyed");
+            }
+            if (!Directory.Exists(replicPath))
+            {
+                Directory.CreateDirectory(replicPath);
+            }
+            if (interval <= TimeSpan.Zero)
+            {
+                throw new ArgumentException("Invalid interval");
+            }
         }
 
         private static void InitLogger(string logPath)
         {
             var config = new NLog.Config.LoggingConfiguration();
-            var debugLogfile = new NLog.Targets.FileTarget("debugLogfile") 
+            var traceLogfile = new NLog.Targets.FileTarget("traceLogfile") 
             {
-                FileName = "file.txt",
+                FileName = "TraceLog.log",
             };
             var logfile = new NLog.Targets.FileTarget("logfile") 
             { 
@@ -51,7 +86,7 @@ namespace CatalogSyncher
             };
             config.AddRule(LogLevel.Info, LogLevel.Error, logconsole);
             config.AddRule(LogLevel.Info, LogLevel.Error, logfile);
-            config.AddRule(LogLevel.Trace, LogLevel.Fatal, debugLogfile);
+            config.AddRule(LogLevel.Trace, LogLevel.Fatal, traceLogfile);
             LogManager.Configuration = config;
         }
 
