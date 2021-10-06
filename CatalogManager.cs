@@ -110,7 +110,7 @@ namespace CatalogSyncher
                     var sourceFileName = item.Info.FullName;
                     var destFileName = Path.Combine(rootPath, item.RelativePath);
                     actionFunc(sourceFileName, destFileName);
-                    _logger.Info("The file {file} was {operation} ", item.RelativePath, GetOperationString(action));
+                    _logger.Info($"The file \"{item.RelativePath}\" was {GetOperationString(action)}");
                     atLeastOneFileWasProcessed |= true;
                 }
                 catch(Exception e)

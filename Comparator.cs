@@ -1,35 +1,30 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using NLog;
 
 namespace CatalogSyncher
 {
-    //internal or public?
-    public class Comparator
+    internal class Comparator
     {
-        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
-
-        public static void CompareTwoFileDictionaries(IDictionary<byte[], MyFile> source, IDictionary<byte[], MyFile> replic)
+        public static void CompareTwoFileDictionaries(IDictionary<byte[], MyFile> source, IDictionary<byte[], MyFile> replica)
         {
             foreach (var item in source)
             {
-                if (!replic.TryGetValue(item.Key, out MyFile currentReplicItem))
+                if (!replica.TryGetValue(item.Key, out MyFile currentReplicaItem))
                 {
                     item.Value.WasChecked = true;
                     item.Value.CatalogItemAction = CatalogItemAction.Create;
                     continue;
                 }
                 //если файл перенесли или переименовали, то поменять положение
-                if (item.Value.RelativePath != currentReplicItem.RelativePath)
+                if (item.Value.RelativePath != currentReplicaItem.RelativePath)
                 {
-                    currentReplicItem.RelativePath = item.Value.RelativePath;
-                    currentReplicItem.CatalogItemAction = CatalogItemAction.Rename;
+                    currentReplicaItem.RelativePath = item.Value.RelativePath;
+                    currentReplicaItem.CatalogItemAction = CatalogItemAction.Rename;
                 }
                 item.Value.WasChecked = true;
-                currentReplicItem.WasChecked = true;
+                currentReplicaItem.WasChecked = true;
             }
-            var removableFiles = replic.Where(i => i.Value.WasChecked == false).Select(i => i.Value);
+            var removableFiles = replica.Where(i => i.Value.WasChecked == false).Select(i => i.Value);
             foreach (var item in removableFiles)
             {
                 item.CatalogItemAction = CatalogItemAction.Delete;
@@ -37,20 +32,20 @@ namespace CatalogSyncher
             }
         }
 
-        public static void CompareTwoDirectories(MyDirectory source, MyDirectory replic)
+        public static void CompareTwoDirectories(MyDirectory source, MyDirectory replica)
         {
-            if(source.RelativePath == replic.RelativePath)
+            if(source.RelativePath == replica.RelativePath)
             {
                 var subSourceDirs = source.Subdirectories;
-                var subReplicDirs = replic.Subdirectories;
-                CompareSubdirectories(subSourceDirs, subReplicDirs);
+                var subReplicaDirs = replica.Subdirectories;
+                CompareSubdirectories(subSourceDirs, subReplicaDirs);
             }
-            FindRemovableDirectories(replic);
+            FindRemovableDirectories(replica);
         }
 
-        private static void FindRemovableDirectories(MyDirectory replic)
+        private static void FindRemovableDirectories(MyDirectory replica)
         {
-            var subDirs = replic.Subdirectories;
+            var subDirs = replica.Subdirectories;
             if (subDirs != null)
             {
                 foreach (var item in subDirs)
@@ -64,22 +59,22 @@ namespace CatalogSyncher
             }
         }
 
-        private static void CompareSubdirectories(IReadOnlyCollection<MyDirectory> source, IReadOnlyCollection<MyDirectory> replic)
+        private static void CompareSubdirectories(IReadOnlyCollection<MyDirectory> source, IReadOnlyCollection<MyDirectory> replica)
         {
             if(source != null)
             {
-                HashSet<MyDirectory> hsReplic = null;
-                if(replic != null)
+                HashSet<MyDirectory> hsReplica = null;
+                if(replica != null)
                 {
-                    hsReplic = new(new RelativePathEqualityComparer());
-                    foreach (var item in replic)
+                    hsReplica = new(new RelativePathEqualityComparer());
+                    foreach (var item in replica)
                     {
-                        hsReplic.Add(item);
+                        hsReplica.Add(item);
                     }
                 }
                 foreach (var item in source)
                 {
-                    if(hsReplic.TryGetValue(item, out MyDirectory currentDir))
+                    if(hsReplica != null && hsReplica.TryGetValue(item, out MyDirectory currentDir))
                     {
                         currentDir.WasChecked = true;
                         CompareSubdirectories(item.Subdirectories, currentDir.Subdirectories);

@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using NLog;
 
 namespace CatalogSyncher
@@ -12,19 +10,19 @@ namespace CatalogSyncher
 
         static int Main(string[] args)
         {
-            if (args.Length == 1 && HelpRequired(args[0]))
+            if (args.Length == 1 && IsHelpRequired(args[0]))
             {
                 DisplayHelp();
                 return 0;
             }
-            if(args.Length != 4)
+            if (args.Length != 4)
             {
                 Console.WriteLine("Invalid arguments.");
                 DisplayHelp();
                 return 1;
             }
             string sourcePath = args[0];
-            string replicPath = args[1];
+            string replicaPath = args[1];
             TimeSpan.TryParse(args[2], out var interval); 
             string logPath = args[3];
             if(string.IsNullOrEmpty(logPath))
@@ -34,21 +32,27 @@ namespace CatalogSyncher
             InitLogger(logPath);
             try
             {
-                LogArguments(sourcePath, replicPath, interval, logPath);
-                ValidateParams(sourcePath, replicPath, interval);
-                using (var syncher = new PeriodicSyncher(interval, new SyncManager(sourcePath, replicPath)))
+                LogArguments(sourcePath, replicaPath, interval, logPath);
+                ValidateParams(sourcePath, replicaPath, interval);
+                using (var syncher = new PeriodicSyncher(interval, new SyncManager(sourcePath, replicaPath)))
                 {
                     Console.WriteLine("Press Escape for exit...");
                     WaitForEscape();
-                    if(syncher.SynchronizationRunning)
+                    if (syncher.SynchronizationRunning)
                     {
                         FinishProgram(syncher);
                     }
                 }
             }
+            catch (ArgumentException e)
+            {
+                _logger.Error(e.Message);
+                return 1;
+            }
             catch (Exception e)
             {
                 _logger.Error(e);
+                return 2;
             }
             finally
             {
@@ -67,7 +71,7 @@ namespace CatalogSyncher
             Console.WriteLine("logPath     \tPath for the log file");
         }
 
-        private static bool HelpRequired(string param)
+        private static bool IsHelpRequired(string param)
         {
             return param == "-h" || param == "--help" || param == "/?";
         }
@@ -107,27 +111,27 @@ namespace CatalogSyncher
             }
         }
 
-        private static void LogArguments(string sourcePath, string replicPath, TimeSpan interval, string logPath)
+        private static void LogArguments(string sourcePath, string replicaPath, TimeSpan interval, string logPath)
         {
             _logger.Trace("Interval: {interval}", interval);
             _logger.Trace("Source path: {source}", sourcePath);
-            _logger.Trace("Replic path: {replic}", replicPath);
+            _logger.Trace("Replica path: {replica}", replicaPath);
             _logger.Trace("Log path: {log}", logPath);
         }
 
-        private static void ValidateParams(string sourcePath, string replicPath, TimeSpan interval)
+        private static void ValidateParams(string sourcePath, string replicaPath, TimeSpan interval)
         {
-            if (sourcePath == null || !Directory.Exists(sourcePath))
+            if (string.IsNullOrEmpty(sourcePath) || !Directory.Exists(sourcePath))
             {
                 throw new ArgumentException($"The path \"{sourcePath}\" doesn't exist");
             }
-            if (replicPath == null)
+            if (string.IsNullOrEmpty(replicaPath))
             {
-                throw new ArgumentException("Replic path wasn't specifyed");
+                throw new ArgumentException("Replica path wasn't specifyed");
             }
-            if (!Directory.Exists(replicPath))
+            if (!Directory.Exists(replicaPath))
             {
-                Directory.CreateDirectory(replicPath);
+                Directory.CreateDirectory(replicaPath);
             }
             if (interval <= TimeSpan.Zero)
             {
@@ -180,36 +184,6 @@ namespace CatalogSyncher
             }
             return resultLogPath;
         }
-
-        // private static void GoToFolderCW(MyDirectory mdir)
-        // {
-        //     if(mdir.Files != null)
-        //     {
-        //         foreach (var item in mdir.Files)
-        //         {
-        //             _logger.Info("{0}:{1}",item.RelativePath, item.CatalogItemAction);
-        //         }
-        //     }
-        //     var dirs = mdir.Subdirectories;
-        //     if(dirs != null)
-        //     {
-        //         foreach (var item in dirs)
-        //         {
-        //             _logger.Info("{0}:{1}", item.RelativePath, item.CatalogItemAction);
-        //             GoToFolderCW(item);
-        //         }
-        //     }
-        // }
-    
-        // private static void WriteLineDic(IEnumerable<MyFile> files)
-        // {
-        //     foreach (var item in files)
-        //     {
-        //         _logger.Info("Uri: {0}\nWasChecked: {1}\nAction: {2}", 
-        //                         item.RelativePath, item.WasChecked, item.CatalogItemAction);
-        //     }
-        // }
-
 
     }
 }

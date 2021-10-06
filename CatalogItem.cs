@@ -17,8 +17,8 @@ namespace CatalogSyncher
 
         public CatalogItem(string path)
         {
-            Path = path;
-            CatalogItemAction = 0;
+            Path = path ?? throw new ArgumentNullException(nameof(path));
+            CatalogItemAction = CatalogItemAction.None;
         }
 
         public void CreateRelativePath(string source, string filePath)
@@ -35,12 +35,12 @@ namespace CatalogSyncher
 
         public IReadOnlyCollection<MyDirectory> Subdirectories => _subdirectories;
         public IReadOnlyCollection<MyFile> Files => _files;
-        public DirectoryInfo Info { get; private set; }
-        public MyDirectory(string path) : base(path) { }
+        public DirectoryInfo Info { get; }
 
-        public MyDirectory(DirectoryInfo di) : this(di.FullName)
+        public MyDirectory(string path) : base(path) { }
+        public MyDirectory(DirectoryInfo di) : this(di?.FullName)
         {
-            Info = di;
+            Info = di ?? throw new ArgumentNullException(nameof(di));
         }
 
         public void CreateDirectory(MyDirectory item)
@@ -60,20 +60,20 @@ namespace CatalogSyncher
 
     public class MyFile: CatalogItem
     {
-        private static readonly Lazy<MD5> _hash = new Lazy<MD5>(MD5.Create);
+        private static readonly Lazy<MD5> _hasher = new Lazy<MD5>(MD5.Create);
         
-        public FileInfo Info { get; private set; }
-        public MyFile(string path): base(path) { }
+        public FileInfo Info { get; }
 
-        public MyFile(FileInfo fi): base(fi.FullName)
+        public MyFile(string path): base(path) { }
+        public MyFile(FileInfo fi): base(fi?.FullName)
         {
-            Info = fi;
+            Info = fi ?? throw new ArgumentNullException(nameof(fi));
         }
 
         public byte[] GetHashMD5()
         {
             using var fileData = Info.OpenRead();
-            return _hash.Value.ComputeHash(fileData);
+            return _hasher.Value.ComputeHash(fileData);
         }
     }
 
