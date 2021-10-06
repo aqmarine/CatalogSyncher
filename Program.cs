@@ -34,14 +34,15 @@ namespace CatalogSyncher
             {
                 LogArguments(sourcePath, replicaPath, interval, logPath);
                 ValidateParams(sourcePath, replicaPath, interval);
-                using (var syncher = new PeriodicSyncher(interval, new SyncManager(sourcePath, replicaPath)))
+                var syncher = new PeriodicSyncher(interval, new SyncManager(sourcePath, replicaPath));
+                using (syncher)
                 {
                     Console.WriteLine("Press Escape for exit...");
                     WaitForEscape();
-                    if (syncher.SynchronizationRunning)
-                    {
-                        FinishProgram(syncher);
-                    }
+                }
+                if (syncher.SynchronizationRunning)
+                {
+                    FinishProgram(syncher);
                 }
             }
             catch (ArgumentException e)
