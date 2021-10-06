@@ -12,15 +12,22 @@ namespace CatalogSyncher
 
         static int Main(string[] args)
         {
+            if (args.Length == 1 && HelpRequired(args[0]))
+            {
+                DisplayHelp();
+                return 0;
+            }
             if(args.Length != 4)
             {
+                Console.WriteLine("Invalid arguments.");
+                DisplayHelp();
                 return 1;
             }
-            string sourcePath = args[0]; //todo named params
+            string sourcePath = args[0];
             string replicPath = args[1];
             TimeSpan.TryParse(args[2], out var interval); 
             string logPath = args[3];
-            if(logPath == null)
+            if(string.IsNullOrEmpty(logPath))
             {
                 logPath = "Log.log";
             }
@@ -31,9 +38,8 @@ namespace CatalogSyncher
                 ValidateParams(sourcePath, replicPath, interval);
                 using (var syncher = new PeriodicSyncher(interval, new SyncManager(sourcePath, replicPath)))
                 {
-                    System.Console.WriteLine("Press Escape for exit...");
+                    Console.WriteLine("Press Escape for exit...");
                     WaitForEscape();
-                    System.Console.WriteLine("Start finish...");
                     if(syncher.SynchronizationRunning)
                     {
                         FinishProgram(syncher);
@@ -52,11 +58,25 @@ namespace CatalogSyncher
             return 0;
         }
 
+        private static void DisplayHelp()
+        {
+            Console.WriteLine("usage: CatalogSyncher [sourcePath] [replicaPath] [interval] [logPath]\n");
+            Console.WriteLine("sourcePath  \tSource directory path in format \"DiskN:/MyCatalogs/Source\"");
+            Console.WriteLine("replicaPath \tReplica directory path in format \"DiskN:/MyCatalogs/Replica\"");
+            Console.WriteLine("interval    \tThe period of updating Replica directory to the state of directory Source in Timespan format, e.g. 00:00:10 (hh:mm:ss)");
+            Console.WriteLine("logPath     \tPath for the log file");
+        }
+
+        private static bool HelpRequired(string param)
+        {
+            return param == "-h" || param == "--help" || param == "/?";
+        }
+
         private static void FinishProgram(PeriodicSyncher syncher)
         {
-            System.Console.WriteLine("Warning: Now synchronization operation is running.");
-            System.Console.WriteLine("If you want to interrupt synchonization process, press [Y]." +
-            "\nIf you want to wait a completion of the operation, press [N].");
+            Console.WriteLine("Warning: Now synchronization operation is running.");
+            Console.WriteLine("If you want to interrupt synchonization process, press [Y]." +
+            "\nIf you want to wait a completion of the operation, press [N]. ");
             ConsoleKeyInfo cki;
             do 
             {
@@ -65,9 +85,9 @@ namespace CatalogSyncher
                     System.Threading.Thread.Sleep(250);
                 }
                 cki = Console.ReadKey(true);
-                Console.WriteLine("Вы ввели клавишу {0}", cki.Key);
             } while (cki.Key != ConsoleKey.Y && cki.Key != ConsoleKey.N);
 
+            Console.WriteLine(cki.Key);
             if (cki.Key == ConsoleKey.N)
             {
                 Console.WriteLine("Awaiting running process to finish");
